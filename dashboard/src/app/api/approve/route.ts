@@ -21,10 +21,18 @@ export async function POST(req: Request) {
 
     if (supabaseUrl && supabaseKey) {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      await supabase.from('ripcord_audit_log').insert([record]);
+      const { error } = await supabase.from('ripcord_audit_log').insert([record]);
+      if (error) {
+        console.error("Supabase error:", error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      }
     } else {
       // Fallback to local JSON file
-      const dataPath = path.join(process.cwd(), 'data', 'audit-log.json');
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const dataPath = path.join(dataDir, 'audit-log.json');
       let logs = [];
       if (fs.existsSync(dataPath)) {
         logs = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -35,6 +43,6 @@ export async function POST(req: Request) {
     
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

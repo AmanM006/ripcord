@@ -1,15 +1,17 @@
 services:
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: [""]
     command: ["anvil", "--host", "0.0.0.0", "--chain-id", "31337"]
     ports: ["8545:8545"]
 
   deployer:
     build: ./contracts
     depends_on: [anvil]
+    entrypoint: [""]
     command: ["forge", "script", "script/Deploy.s.sol", "--rpc-url", "http://anvil:8545", "--broadcast"]
     volumes:
-      - ./contracts/out/deploy-addresses.json:/out/deploy-addresses.json
+      - ./contracts/out:/out
 
   mcp-server:
     build: ./mcp-server
@@ -34,7 +36,7 @@ services:
     build: ./dashboard
     ports: ["3000:3000"]
     environment:
-      - NEXT_PUBLIC_MCP_URL=http://localhost:8811
+      - NEXT_PUBLIC_MCP_URL=http://mcp-server:8811
       - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     depends_on: [mcp-server]
@@ -44,4 +46,5 @@ services:
     command: ["npx", "@truefoundry/trueforge"]
     ports: ["8790:8790"]
     environment:
+      - HOST=0.0.0.0
       - LLM_API_KEY=${LLM_API_KEY}
