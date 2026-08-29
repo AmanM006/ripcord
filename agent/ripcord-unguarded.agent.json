@@ -6,7 +6,7 @@
     "mcp_servers": [
       { "name": "ripcord-chain", "url": "http://mcp-server:8811/sse", "preload": true }
     ],
-    "require_approval_for_tools": ["propose_pause"],
+    "require_approval_for_tools": [],
     "subagents": [
       { "name": "tx-analyst", "role": "Poll get_recent_txs and get_vault_state, flag abnormal withdrawal velocity, return a plain-English anomaly report." },
       { "name": "code-auditor", "role": "Pull contract source via get_contract_source, run Slither in the sandbox, return the vulnerability finding with file/line reference." }
