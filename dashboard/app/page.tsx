@@ -8,7 +8,7 @@ export default function Home() {
 
   const handleDecision = async (decision: 'APPROVE' | 'DENY') => {
     if (!digestId) return;
-    await fetch(/api/ + decision.toLowerCase(), {
+    await fetch(`/api/` + decision.toLowerCase(), {
       method: 'POST',
       body: JSON.stringify({ simulationDigestId: digestId, decision })
     });
@@ -37,7 +37,7 @@ export default function Home() {
         <p className="text-6xl font-black text-green-400 mb-6 drop-shadow-md">
           {(Number(tvl) / 1e18).toFixed(2)} mUSD
         </p>
-        <div className={	ext-xl font-bold p-3 rounded uppercase tracking-widest }>
+        <div className={`text-xl font-bold p-3 rounded uppercase tracking-widest ${paused ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
           {paused ? 'Circuit Breaker: Paused' : 'System: Active'}
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={lex gap-4 w-full px-8 transition-opacity }>
+            <div className={`flex gap-4 w-full px-8 transition-opacity ${digestId ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
               <button onClick={() => handleDecision('APPROVE')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
                 ALLOW
               </button>
