@@ -4,6 +4,16 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [tvl, setTvl] = useState<string>('0');
   const [paused, setPaused] = useState<boolean>(false);
+  const [digestId, setDigestId] = useState<string | null>(null);
+
+  const handleDecision = async (decision: 'APPROVE' | 'DENY') => {
+    if (!digestId) return;
+    await fetch(`/api/` + decision.toLowerCase(), {
+      method: 'POST',
+      body: JSON.stringify({ simulationDigestId: digestId, decision })
+    });
+    setDigestId(null);
+  };
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -60,11 +70,11 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex gap-4 w-full px-8 opacity-50 pointer-events-none">
-              <button className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
+            <div className={`flex gap-4 w-full px-8 transition-opacity ${digestId ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+              <button onClick={() => handleDecision('APPROVE')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
                 ALLOW
               </button>
-              <button className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
+              <button onClick={() => handleDecision('DENY')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
                 DENY
               </button>
             </div>

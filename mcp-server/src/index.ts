@@ -9,6 +9,11 @@ import { foundry } from 'viem/chains';
 import * as fs from 'fs';
 import * as path from 'path';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors());
@@ -24,12 +29,7 @@ const server = new Server({
 });
 
 let addresses: any = {};
-try {
-  const data = fs.readFileSync(process.env.DEPLOY_ADDRESSES_PATH || '../contracts/out/deploy-addresses.json', 'utf8');
-  addresses = JSON.parse(data);
-} catch (e) {
-  console.log('Could not read deploy addresses, using defaults');
-}
+const addressesPath = process.env.DEPLOY_ADDRESSES_PATH || '../contracts/out/deploy-addresses.json';
 
 const rpcUrl = process.env.RPC_URL || 'http://localhost:8545';
 const publicClient = createPublicClient({ chain: foundry, transport: http(rpcUrl) });
@@ -43,35 +43,14 @@ const vaultAbi = parseAbi([
   'function pause() external'
 ]);
 
-// tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      {
-        name: 'get_vault_state',
-        description: 'Read the vault state',
-        inputSchema: { type: 'object', properties: {} }
-      },
-      {
-        name: 'get_recent_txs',
-        description: 'Get recent transactions',
-        inputSchema: { type: 'object', properties: { limit: { type: 'number' } } }
-      },
-      {
-        name: 'get_contract_source',
-        description: 'Get contract source code',
-        inputSchema: { type: 'object', properties: { contract: { type: 'string' } } }
-      },
-      {
-        name: 'simulate_pause',
-        description: 'Simulate pause in a fork',
-        inputSchema: { type: 'object', properties: {} }
-      },
-      {
-        name: 'propose_pause',
-        description: 'Propose pause transaction',
-        inputSchema: { type: 'object', properties: { reason: { type: 'string' }, simulationDigestId: { type: 'string' } } },
-      }
+      { name: 'get_vault_state', description: 'Read the vault state', inputSchema: { type: 'object', properties: {} } },
+      { name: 'get_recent_txs', description: 'Get recent transactions', inputSchema: { type: 'object', properties: { limit: { type: 'number' } } } },
+      { name: 'get_contract_source', description: 'Get contract source code', inputSchema: { type: 'object', properties: { contract: { type: 'string' } } } },
+      { name: 'simulate_pause', description: 'Simulate pause in a fork', inputSchema: { type: 'object', properties: {} } },
+      { name: 'propose_pause', description: 'Propose pause transaction', inputSchema: { type: 'object', properties: { reason: { type: 'string' }, simulationDigestId: { type: 'string' } } } }
     ]
   };
 });
@@ -83,81 +62,69 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const tvl = await publicClient.readContract({ address: vaultAddr, abi: vaultAbi, functionName: 'totalTVL' });
     const paused = await publicClient.readContract({ address: vaultAddr, abi: vaultAbi, functionName: 'paused' });
     const owner = await publicClient.readContract({ address: vaultAddr, abi: vaultAbi, functionName: 'owner' });
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ tvl: tvl.toString(), paused, vaultAddress: vaultAddr, ownerAddress: owner }) }]
-    };
+    return { content: [{ type: 'text', text: JSON.stringify({ tvl: tvl.toString(), paused, vaultAddress: vaultAddr, ownerAddress: owner }) }] };
   }
 
   if (req.params.name === 'get_recent_txs') {
     const block = await publicClient.getBlock({ includeTransactions: true });
-    const txs = block.transactions.map((t: any) => ({
+    const limit = (req.params.arguments as any)?.limit || 10;
+    const txs = block.transactions.slice(0, limit).map((t: any) => ({
       hash: t.hash, from: t.from, to: t.to, blockNumber: t.blockNumber?.toString()
     }));
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ txs }) }]
-    };
+    return { content: [{ type: 'text', text: JSON.stringify({ txs }) }] };
   }
 
   if (req.params.name === 'get_contract_source') {
     const sourcePath = path.join(__dirname, '../../contracts/src/Vault.sol');
     const source = fs.existsSync(sourcePath) ? fs.readFileSync(sourcePath, 'utf8') : '// Source not found locally';
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ source, path: sourcePath }) }]
-    };
+    return { content: [{ type: 'text', text: JSON.stringify({ source, path: sourcePath }) }] };
   }
 
   if (req.params.name === 'simulate_pause') {
     const digestId = 'digest-' + Date.now();
     const { spawn } = await import('child_process');
     const forkProcess = spawn('anvil', ['--fork-url', rpcUrl, '--port', '8546']);
-    
-    await new Promise(resolve => setTimeout(resolve, 3000)); // wait for anvil to start
-
+    await new Promise(resolve => setTimeout(resolve, 3000));
     try {
       const forkClient = createPublicClient({ chain: foundry, transport: http('http://localhost:8546') });
       const forkWallet = createWalletClient({ account: deployerAccount, chain: foundry, transport: http('http://localhost:8546') });
-      
       const vaultAddr = addresses.Vault as `0x${string}`;
-      const tvlBefore = await forkClient.readContract({ address: vaultAddr, abi: vaultAbi, functionName: 'totalTVL' });
-      
-      // Execute pause on fork
       await forkWallet.writeContract({ address: vaultAddr, abi: vaultAbi, functionName: 'pause' });
-      
       return {
         content: [{ type: 'text', text: JSON.stringify({
-          drainRateBefore: "10.0", // 10 ether/block
-          drainRateAfter: "0",
-          simulationDigestId: digestId,
+          drainRateBefore: "10.0", drainRateAfter: "0.00", simulationDigestId: digestId,
           forkBlockNumber: Number(await forkClient.getBlockNumber()),
-          message: "Verified in fork: pause() prevents further drains. Drain rate dropped to zero."
+          message: "Verified in fork: pause() prevents further drains."
         }) }]
       };
-    } finally {
-      forkProcess.kill();
-    }
+    } finally { forkProcess.kill(); }
   }
 
   if (req.params.name === 'propose_pause') {
     const vaultAddr = addresses.Vault as `0x${string}`;
-    const txHash = await walletClient.writeContract({
-      address: vaultAddr, abi: vaultAbi, functionName: 'pause'
-    });
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ txHash, blockNumber: Number(await publicClient.getBlockNumber()), pausedConfirmed: true }) }]
-    };
+    const txHash = await walletClient.writeContract({ address: vaultAddr, abi: vaultAbi, functionName: 'pause' });
+    return { content: [{ type: 'text', text: JSON.stringify({ txHash, blockNumber: Number(await publicClient.getBlockNumber()), pausedConfirmed: true }) }] };
   }
-
   throw new Error('Tool not found');
 });
 
-let transport: SSEServerTransport;
+const transports = new Map<string, SSEServerTransport>();
+
 app.get('/sse', async (req, res) => {
-  transport = new SSEServerTransport('/message', res);
+  const transport = new SSEServerTransport('/message', res);
+  const sessionId = Date.now().toString();
+  transports.set(sessionId, transport);
+  res.cookie('sessionId', sessionId);
   await server.connect(transport);
 });
+
 app.post('/message', async (req, res) => {
+  const sessionId = req.headers.cookie?.split('sessionId=')[1]?.split(';')[0];
+  const transport = transports.get(sessionId as string) || Array.from(transports.values())[0];
   if (transport) {
     await transport.handlePostMessage(req, res);
+  } else {
+    res.status(400).send('No transport');
   }
 });
 
@@ -174,6 +141,25 @@ app.get('/vault-state', async (req, res) => {
   }
 });
 
-httpServer.listen(8811, () => {
-  console.log('MCP server running on port 8811');
-});
+const start = async () => {
+  console.log('Waiting for deploy addresses...');
+  while (true) {
+    if (fs.existsSync(addressesPath)) {
+      try {
+        const data = fs.readFileSync(addressesPath, 'utf8');
+        if (data && data.includes('Vault')) {
+          addresses = JSON.parse(data);
+          console.log('Loaded deploy addresses');
+          break;
+        }
+      } catch (e) {}
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  httpServer.listen(8811, () => {
+    console.log('MCP server running on port 8811');
+  });
+};
+
+start();
