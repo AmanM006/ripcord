@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "forge-std/Script.sol";
+import "../src/Vault.sol";
+import "../src/MockToken.sol";
+import "../src/Attacker.sol";
+
+contract Deploy is Script {
+    function run() external {
+        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
+        vm.startBroadcast(deployerPrivateKey);
+
+        MockToken token = new MockToken();
+        Vault vault = new Vault(address(token));
+        Attacker attacker = new Attacker(address(vault), address(token));
+
+        token.mint(address(vault), 1000 ether); // seed fake TVL
+        token.mint(address(attacker), 10 ether); // seed attacker
+        
+        vm.stopBroadcast();
+
+        // The attacker needs to approve and deposit so we can attack later
+        // Doing this as a separate broadcast or just a prank if possible
+        vm.startBroadcast(deployerPrivateKey);
+        // Wait, Attacker contract calls are msg.sender = deployer here, so it works.
+        attacker.setupDeposit(10 ether);
+        vm.stopBroadcast();
+
+        // Print addresses as JSON
+        string memory json = string(
+            abi.encodePacked(
+                '{ "MockToken": "', vm.toString(address(token)),
+                '", "Vault": "', vm.toString(address(vault)),
+                '", "Attacker": "', vm.toString(address(attacker)), '" }'
+            )
+        );
+        vm.writeFile("/out/deploy-addresses.json", json);
+    }
+}

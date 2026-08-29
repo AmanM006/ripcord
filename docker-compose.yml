@@ -1,0 +1,47 @@
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: ["anvil", "--host", "0.0.0.0", "--chain-id", "31337"]
+    ports: ["8545:8545"]
+
+  deployer:
+    build: ./contracts
+    depends_on: [anvil]
+    command: ["forge", "script", "script/Deploy.s.sol", "--rpc-url", "http://anvil:8545", "--broadcast"]
+    volumes:
+      - ./contracts/out/deploy-addresses.json:/out/deploy-addresses.json
+
+  mcp-server:
+    build: ./mcp-server
+    depends_on: [deployer]
+    ports: ["8811:8811"]
+    environment:
+      - RPC_URL=http://anvil:8545
+      - DEPLOY_ADDRESSES_PATH=/shared/deploy-addresses.json
+    volumes:
+      - ./contracts/out:/shared
+
+  attacker-runner:
+    build: ./attacker
+    depends_on: [mcp-server]
+    environment:
+      - RPC_URL=http://anvil:8545
+      - TRIGGER_MODE=manual   # or "auto-after:10s"
+    volumes:
+      - ./contracts/out:/shared
+
+  dashboard:
+    build: ./dashboard
+    ports: ["3000:3000"]
+    environment:
+      - NEXT_PUBLIC_MCP_URL=http://localhost:8811
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    depends_on: [mcp-server]
+
+  trueforge:
+    image: node:22-alpine
+    command: ["npx", "@truefoundry/trueforge"]
+    ports: ["8790:8790"]
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY}
