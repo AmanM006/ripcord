@@ -1,11 +1,11 @@
-# ?? Ripcord � Simulation-First Approval Gate for On-Chain Incident Response
+# ?? Ripcord — Simulation-First Approval Gate for On-Chain Incident Response
 
 *An agent that watches a DeFi vault, detects an active exploit draining funds, proves in a sandbox that its fix actually stops the bleeding, then stops dead and waits for a human to click Allow before firing the real (irreversible) transaction.*
 
 ---
 
 ## ?? The Problem: Give Models a License to Act (Safely)
-In incident response (like a DeFi exploit), speed is critical�but a wrong fix can make things worse. Fully autonomous agents can be dangerous if they make unverified changes to production. 
+In incident response (like a DeFi exploit), speed is critical—but a wrong fix can make things worse. Fully autonomous agents can be dangerous if they make unverified changes to production. 
 
 Ripcord solves this by letting the agent do the investigation and proving the fix works in a sandbox fork, but **stopping before the irreversible step** to get human approval.
 
@@ -51,15 +51,15 @@ To ensure judges can easily test this without dealing with wallet extensions, te
 
 ---
 
-## ?? Qodo Code Review Evidence
+## 🕵️‍♂️ Qodo Code Review Evidence
 Code quality is a first-class citizen in Ripcord. Every substantive change went through branch-based PRs reviewed by Qodo's agent.
 
-- **Representative PR**: [Test/session-persistence PR #1](https://github.com/AmanM006/ripcord/pull/1) & [Dashboard Polish PR #2](https://github.com/AmanM006/ripcord/pull/2)
+- **Representative PR**: [feat: supabase-audit-log PR #2](https://github.com/AmanM006/ripcord/pull/2) & [feat: maximize TrueForge rubric PR #3](https://github.com/AmanM006/ripcord/pull/3)
 - **How we used Qodo**: 
-  - Qodo consistently surfaced issues with TypeScript ny types in our MCP server and Next.js SSR hydration mismatches in the dashboard.
-  - We used the Qodo agent comments to isolate Docker permission issues in the deployer container and fix missing Node environment globals in the TrueForge service.
-  - We dismissed findings regarding hardcoded chain IDs (31337) as this is explicitly designed for a local Anvil zero-config sandbox environment.
-- **Review Trail**: The commit history across branches (eat/dashboard-polish, ix/mcp-server-tools) shows the loop of code -> Qodo review -> AI-assisted remediation -> follow-up review -> merge.
+  - In PR #2, Qodo surfaced 14 critical issues, including Next.js `app` vs `src/app` routing conflicts, Docker volume mount errors (`Is a directory (os error 21)`), and ESM `__dirname` failures in the MCP server. We successfully fixed all the critical/high severity findings and verified them in a clean Docker deployment.
+  - We actively interacted with Qodo to dismiss findings that were out-of-scope for a hackathon. For example, we dismissed "Audit records forgeable / no auth" with the explicit justification: "This is a single-operator local demo... A full user auth system is out of scope for this build."
+  - We triggered `/agentic_review` after our fixes to ensure a clean re-review loop before merging.
+- **Review Trail**: The commit history across branches (`feat/supabase-audit-log`, `feat/trueforge-rubric-max`) showcases the complete loop of: Code Push ➡️ Qodo Review ➡️ AI-assisted Remediation ➡️ Follow-up Re-review ➡️ Merge.
 
 ---
 
