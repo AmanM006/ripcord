@@ -44,4 +44,5 @@ services:
     command: ["npx", "@truefoundry/trueforge"]
     ports: ["8790:8790"]
     environment:
+      - HOST=0.0.0.0
       - LLM_API_KEY=${LLM_API_KEY}
