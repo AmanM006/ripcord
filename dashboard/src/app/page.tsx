@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 
 export default function Home() {
-  const [tvl, setTvl] = useState<string>('1010000000000000000000');
+  const [tvl, setTvl] = useState<string | null>(null);
   const [paused, setPaused] = useState<boolean>(false);
   const [digestId, setDigestId] = useState<string | null>(null);
   
@@ -15,13 +15,16 @@ export default function Home() {
   const [isError, setIsError] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Poll vault state
+  // Poll vault state — only update TVL if the chain returns a valid positive value
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch('/api/vault-state');
         const data = await res.json();
-        if (data.tvl) setTvl(data.tvl);
+        if (data.tvl !== undefined) {
+          // Only update display if > 0 (prevents 0-flicker between attacker cycles)
+          if (data.tvl !== '0' && data.tvl !== '') setTvl(data.tvl);
+        }
         if (data.paused !== undefined) setPaused(data.paused);
       } catch (err) {}
     }, 500);
@@ -226,8 +229,11 @@ export default function Home() {
           <div className="md:col-span-3 bg-[#0a0a0a] border border-zinc-900 rounded-xl p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold mb-0.5">Vault Total Value Locked</p>
-              <p className="text-2xl font-mono text-zinc-100 leading-none">
-                {(Number(tvl) / 1e18).toFixed(2)} <span className="text-zinc-600 text-lg">mUSD</span>
+               <p className="text-2xl font-mono text-zinc-100 leading-none">
+                {tvl === null
+                  ? <span className="text-zinc-600 text-base animate-pulse">Reading chain...</span>
+                  : <>{(Number(tvl) / 1e18).toFixed(2)} <span className="text-zinc-600 text-lg">mUSD</span></>
+                }
               </p>
             </div>
             <div className="text-left md:text-right">

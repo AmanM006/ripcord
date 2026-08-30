@@ -15,8 +15,8 @@ contract Deploy is Script {
         Vault vault = new Vault(address(token));
         Attacker attacker = new Attacker(address(vault), address(token));
 
-        token.mint(address(vault), 1000 ether); // seed fake TVL
-        token.mint(address(attacker), 100 ether); // seed attacker with enough for ~15 drain cycles
+        token.mint(address(vault), 10000 ether); // seed fake TVL — large so drain is visible for demo
+        token.mint(address(attacker), 500 ether); // seed attacker with enough for many drain cycles
         
         vm.stopBroadcast();
 
