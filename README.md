@@ -16,7 +16,8 @@ Ripcord is designed specifically to push the **TrueForge Agent Harness** to its 
 
 | TrueForge Feature | How Ripcord Uses It |
 |-------------------|----------------------|
-| **MCP Servers** | Uses a custom ipcord-mcp to expose read/write access to the local Anvil chain (get_vault_state, propose_pause). |
+| **MCP Servers** | Uses a custom 
+ipcord-mcp to expose read/write access to the local Anvil chain (get_vault_state, propose_pause). |
 | **Sandbox Execution** | Uses the sandbox to run a simulation fork (simulate_pause) that proves the fix actually drops the drainRate to 0 before proposing it. |
 | **Human-in-the-Loop** | Built-in approval gate. The agent prepares a *Simulation Proof Digest* and pauses via TrueForge session state until a human hits "ALLOW". |
 | **Subagents** | The main Incident Commander explicitly spawns subagents to read through raw hex transaction logs to find the attacker's origin without polluting its main context. |
@@ -52,24 +53,6 @@ To ensure judges can easily test this without dealing with wallet extensions, te
 ---
 
 ## 🕵️‍♂️ Qodo Code Review Evidence
-Code quality is a first-class citizen in Ripcord. Every substantive change went through branch-based PRs reviewed by Qodo's agent.
-
-- **Representative PR**: [feat: supabase-audit-log PR #2](https://github.com/AmanM006/ripcord/pull/2) & [feat: maximize TrueForge rubric PR #3](https://github.com/AmanM006/ripcord/pull/3)
-- **How we used Qodo**: 
-  - In PR #2, Qodo surfaced 14 critical issues, including Next.js `app` vs `src/app` routing conflicts, Docker volume mount errors (`Is a directory (os error 21)`), and ESM `__dirname` failures in the MCP server. We successfully fixed all the critical/high severity findings and verified them in a clean Docker deployment.
-  - We actively interacted with Qodo to dismiss findings that were out-of-scope for a hackathon. For example, we dismissed "Audit records forgeable / no auth" with the explicit justification: "This is a single-operator local demo... A full user auth system is out of scope for this build."
-  - We triggered `/agentic_review` after our fixes to ensure a clean re-review loop before merging.
-- **Review Trail**: The commit history across branches (`feat/supabase-audit-log`, `feat/trueforge-rubric-max`) showcases the complete loop of: Code Push ➡️ Qodo Review ➡️ AI-assisted Remediation ➡️ Follow-up Re-review ➡️ Merge.
-
----
-
-## ?? Demo Video
-*(Add your 3-minute demo video link here before submission)*
-
-## ?? License
-MIT License
-
-## 🕵️‍♂️ Qodo Code Review Evidence
 
 Code quality and engineering practices were treated as core requirements throughout the development of Ripcord. Every substantive change was shipped via branch-based Pull Requests reviewed by Qodo's AI agent prior to merging.
 
@@ -78,14 +61,14 @@ Code quality and engineering practices were treated as core requirements through
 - **[PR #3: feat: maximize TrueForge rubric coverage](https://github.com/AmanM006/ripcord/pull/3)**
 
 ### What Qodo Surfaced & Action Taken
-- **Critical/High Severity Findings:** In PR #2 and PR #3, Qodo identified 14 high-impact findings, including Next.js routing collisions (pp vs src/app), Docker volume mount errors (Is a directory (os error 21)), missing input sanitization on Anvil RPC inputs, and ESM __dirname resolution failures in Node.js modules.
+- **Critical/High Severity Findings:** In PR #2 and PR #3, Qodo identified 14 high-impact findings, including Next.js routing collisions (`app` vs `src/app`), Docker volume mount errors (`Is a directory (os error 21)`), missing input sanitization on Anvil RPC inputs, and ESM `__dirname` resolution failures in Node.js modules.
 - **Remediation Loop:** All valid High and Critical security/runtime findings were remediated via dedicated commits, followed by manual re-tests in a clean Docker environment.
 - **Justified Dismissals:** Out-of-scope architectural warnings were intentionally dismissed in-thread with explicit operational reasoning. For example, Qodo flagged missing RBAC on the audit log endpoint; this was dismissed with the documented justification: *"Single-operator local demo environment; production authentication is handled via container network boundaries."*
 
 ### PR Review Trail Workflow
 Every merged PR strictly executed the following lifecycle:
 1. **Branch & PR Creation:** Feature branch opened with scoped commits and detailed context.
-2. **Qodo Initial Review:** Triggered automatically or via /agentic_review.
+2. **Qodo Initial Review:** Triggered automatically or via `/agentic_review`.
 3. **Remediation & Decisioning:** High findings fixed or explicitly dismissed with thread rationale.
-4. **Follow-Up Re-review:** Triggered /agentic_review to confirm clean resolution.
-5. **Human Merge:** Merged into main only after Qodo review trail was complete.
+4. **Follow-Up Re-review:** Triggered `/agentic_review` to confirm clean resolution.
+5. **Human Merge:** Merged into `main` only after Qodo review trail was complete.
