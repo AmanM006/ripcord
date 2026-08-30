@@ -377,11 +377,11 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="flex gap-3">
-                        <button onClick={() => handleDecision('DENY')} className="flex-1 bg-[#111] hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium py-2.5 rounded-md text-sm transition-colors cursor-pointer active:scale-95">
-                          Deny Action
+                        <button onClick={() => handleDecision('DENY')} className="flex-1 bg-[#111] hover:bg-red-950 border border-red-900/50 text-red-400 font-medium py-2.5 rounded-md text-sm transition-colors cursor-pointer active:scale-95">
+                          Deny
                         </button>
-                        <button onClick={() => handleDecision('APPROVE')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-medium py-2.5 rounded-md text-sm transition-colors shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer active:scale-95">
-                          Authorize Pause
+                        <button onClick={() => handleDecision('APPROVE')} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-md text-sm transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer active:scale-95">
+                          ✅ Authorize Pause
                         </button>
                       </div>
                     )}
