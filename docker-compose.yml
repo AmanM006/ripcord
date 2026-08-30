@@ -28,7 +28,7 @@ services:
     depends_on: [mcp-server]
     environment:
       - RPC_URL=http://anvil:8545
-      - TRIGGER_MODE=manual   # or "auto-after:10s"
+      - TRIGGER_MODE=auto-after:10s
     volumes:
       - ./contracts/out:/shared
 
@@ -42,9 +42,9 @@ services:
     depends_on: [mcp-server]
 
   trueforge:
-    image: node:22-alpine
-    command: ["npx", "@truefoundry/trueforge"]
+    build: ./trueforge
     ports: ["8790:8790"]
     environment:
       - HOST=0.0.0.0
       - LLM_API_KEY=${LLM_API_KEY}
+      - GEMINI_API_KEY=${LLM_API_KEY}

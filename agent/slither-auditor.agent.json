@@ -1,0 +1,16 @@
+{
+  "name": "slither-auditor",
+  "manifest": {
+    "model": {
+      "name": "google-gemini/gemini-1.5-flash"
+    },
+    "instructions": "Execute static analysis on contracts/Vault.sol. Identify AST vulnerability paths (e.g., Reentrancy, Missing Access Control).",
+    "mcp_servers": [
+      {
+        "name": "ripcord-chain",
+        "enable_tools": ["get_contract_source"],
+        "preload": true
+      }
+    ]
+  }
+}

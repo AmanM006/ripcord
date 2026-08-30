@@ -1,8 +1,9 @@
-'use client';
-import { useEffect, useState } from 'react';
+﻿with open('src/app/page.tsx', 'w', encoding='utf-8') as f:
+    f.write('''\'use client\';
+import { useEffect, useState } from \'react\';
 
 export default function Home() {
-  const [tvl, setTvl] = useState<string>('0');
+  const [tvl, setTvl] = useState<string>(\'0\');
   const [paused, setPaused] = useState<boolean>(false);
   const [digestId, setDigestId] = useState<string | null>(null);
   
@@ -14,7 +15,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/vault-state');
+        const res = await fetch(\'/api/vault-state\');
         const data = await res.json();
         if (data.tvl) setTvl(data.tvl);
         if (data.paused !== undefined) setPaused(data.paused);
@@ -24,7 +25,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const activeSession = localStorage.getItem('tf_active_session');
+    const activeSession = localStorage.getItem(\'tf_active_session\');
     if (activeSession) {
       setSessionId(activeSession);
     }
@@ -44,7 +45,7 @@ export default function Home() {
         
         const latestTurn = turns.data[0];
         
-        if (latestTurn.state && latestTurn.state.status === 'waiting_for_approval') {
+        if (latestTurn.state && latestTurn.state.status === \'waiting_for_approval\') {
             setIsWaitingApproval(true);
         } else {
             setIsWaitingApproval(false);
@@ -56,13 +57,13 @@ export default function Home() {
         if (events.data) {
           const logs: string[] = [];
           events.data.forEach((evt: any) => {
-            if (evt.type === 'tool.call') {
+            if (evt.type === \'tool.call\') {
                logs.push(`Tool called: ${evt.tool_calls[0].function.name}`);
-            } else if (evt.type === 'model.message') {
-               logs.push(`Agent: ${evt.content || 'Thinking...'}`);
-            } else if (evt.type === 'tool.response') {
-               logs.push('Tool returned.');
-               const match = evt.content.match(/<SIMULATION_DIGEST>([\s\S]*?)<\/SIMULATION_DIGEST>/);
+            } else if (evt.type === \'model.message\') {
+               logs.push(`Agent: ${evt.content || \'Thinking...\'}`);
+            } else if (evt.type === \'tool.response\') {
+               logs.push(\'Tool returned.\');
+               const match = evt.content.match(/<SIMULATION_DIGEST>([\\s\\S]*?)<\\/SIMULATION_DIGEST>/);
                if (match) {
                  try {
                    const parsed = JSON.parse(match[1]);
@@ -83,28 +84,28 @@ export default function Home() {
 
   const handleStartSession = async () => {
     try {
-      const res = await fetch('http://localhost:8790/api/v1/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: { name: 'ripcord' } })
+      const res = await fetch(\'http://localhost:8790/api/v1/sessions\', {
+        method: \'POST\',
+        headers: { \'Content-Type\': \'application/json\' },
+        body: JSON.stringify({ agent: { name: \'ripcord\' } })
       });
       const data = await res.json();
       const newSessId = data.data.id;
       setSessionId(newSessId);
-      localStorage.setItem('tf_active_session', newSessId);
+      localStorage.setItem(\'tf_active_session\', newSessId);
       
       await fetch(`http://localhost:8790/api/v1/sessions/${newSessId}/turns`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: \'POST\',
+        headers: { \'Content-Type\': \'application/json\' },
         body: JSON.stringify({
-          input: [{ type: 'user.message', content: 'Investigate the vault right now. Call get_vault_state first, then get_recent_txs. Check if there is an active drain happening. Then simulate a pause.' }],
+          input: [{ type: \'user.message\', content: \'Investigate the vault right now. Call get_vault_state first, then get_recent_txs. Check if there is an active drain happening. Then simulate a pause.\' }],
           stream: false
         })
       });
     } catch (e) { console.error(e); }
   };
 
-  const handleDecision = async (decision: 'APPROVE' | 'DENY') => {
+  const handleDecision = async (decision: \'APPROVE\' | \'DENY\') => {
     if (!digestId) return;
     
     if (sessionId && isWaitingApproval) {
@@ -114,8 +115,8 @@ export default function Home() {
             const turnId = turns.data[0].id;
             
             await fetch(`http://localhost:8790/api/v1/sessions/${sessionId}/turns/${turnId}/resume`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: \'POST\',
+                headers: { \'Content-Type\': \'application/json\' },
                 body: JSON.stringify({
                     tool_approval: { decision: decision.toLowerCase() }
                 })
@@ -147,8 +148,8 @@ export default function Home() {
         <p className="text-6xl font-black text-green-400 mb-6 drop-shadow-md">
           {(Number(tvl) / 1e18).toFixed(2)} mUSD
         </p>
-        <div className={`text-xl font-bold p-3 rounded uppercase tracking-widest ${paused ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
-          {paused ? 'Circuit Breaker: Paused' : 'System: Active'}
+        <div className={`text-xl font-bold p-3 rounded uppercase tracking-widest ${paused ? \'bg-red-600 text-white\' : \'bg-green-600 text-white\'}`}>
+          {paused ? \'Circuit Breaker: Paused\' : \'System: Active\'}
         </div>
       </div>
 
@@ -187,11 +188,11 @@ export default function Home() {
                 </div>
             )}
 
-            <div className={`flex gap-4 w-full px-8 transition-opacity ${digestId && isWaitingApproval ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-              <button onClick={() => handleDecision('APPROVE')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
+            <div className={`flex gap-4 w-full px-8 transition-opacity ${digestId && isWaitingApproval ? \'opacity-100\' : \'opacity-50 pointer-events-none\'}`}>
+              <button onClick={() => handleDecision(\'APPROVE\')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
                 ALLOW
               </button>
-              <button onClick={() => handleDecision('DENY')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
+              <button onClick={() => handleDecision(\'DENY\')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-lg">
                 DENY
               </button>
             </div>
@@ -199,4 +200,4 @@ export default function Home() {
       </div>
     </main>
   );
-}
+}''')

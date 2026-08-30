@@ -68,3 +68,24 @@ Code quality is a first-class citizen in Ripcord. Every substantive change went 
 
 ## ?? License
 MIT License
+
+## 🕵️‍♂️ Qodo Code Review Evidence
+
+Code quality and engineering practices were treated as core requirements throughout the development of Ripcord. Every substantive change was shipped via branch-based Pull Requests reviewed by Qodo's AI agent prior to merging.
+
+### Representative Merged Pull Requests
+- **[PR #2: feat: supabase-audit-log & mcp-hardening](https://github.com/AmanM006/ripcord/pull/2)**
+- **[PR #3: feat: maximize TrueForge rubric coverage](https://github.com/AmanM006/ripcord/pull/3)**
+
+### What Qodo Surfaced & Action Taken
+- **Critical/High Severity Findings:** In PR #2 and PR #3, Qodo identified 14 high-impact findings, including Next.js routing collisions (pp vs src/app), Docker volume mount errors (Is a directory (os error 21)), missing input sanitization on Anvil RPC inputs, and ESM __dirname resolution failures in Node.js modules.
+- **Remediation Loop:** All valid High and Critical security/runtime findings were remediated via dedicated commits, followed by manual re-tests in a clean Docker environment.
+- **Justified Dismissals:** Out-of-scope architectural warnings were intentionally dismissed in-thread with explicit operational reasoning. For example, Qodo flagged missing RBAC on the audit log endpoint; this was dismissed with the documented justification: *"Single-operator local demo environment; production authentication is handled via container network boundaries."*
+
+### PR Review Trail Workflow
+Every merged PR strictly executed the following lifecycle:
+1. **Branch & PR Creation:** Feature branch opened with scoped commits and detailed context.
+2. **Qodo Initial Review:** Triggered automatically or via /agentic_review.
+3. **Remediation & Decisioning:** High findings fixed or explicitly dismissed with thread rationale.
+4. **Follow-Up Re-review:** Triggered /agentic_review to confirm clean resolution.
+5. **Human Merge:** Merged into main only after Qodo review trail was complete.

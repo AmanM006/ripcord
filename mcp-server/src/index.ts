@@ -90,12 +90,15 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       const forkWallet = createWalletClient({ account: deployerAccount, chain: foundry, transport: http('http://localhost:8546') });
       const vaultAddr = addresses.Vault as `0x${string}`;
       await forkWallet.writeContract({ address: vaultAddr, abi: vaultAbi, functionName: 'pause' });
+      
+      const payload = JSON.stringify({
+        drainRateBefore: "10.0", drainRateAfter: "0.00", simulationDigestId: digestId,
+        forkBlockNumber: Number(await forkClient.getBlockNumber()),
+        message: "Verified in fork: pause() prevents further drains."
+      });
+
       return {
-        content: [{ type: 'text', text: JSON.stringify({
-          drainRateBefore: "10.0", drainRateAfter: "0.00", simulationDigestId: digestId,
-          forkBlockNumber: Number(await forkClient.getBlockNumber()),
-          message: "Verified in fork: pause() prevents further drains."
-        }) }]
+        content: [{ type: 'text', text: `<SIMULATION_DIGEST>${payload}</SIMULATION_DIGEST>` }]
       };
     } finally { forkProcess.kill(); }
   }
@@ -111,18 +114,22 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 const transports = new Map<string, SSEServerTransport>();
 
 app.get('/sse', async (req, res) => {
-  const transport = new SSEServerTransport('/message', res);
   const sessionId = Date.now().toString();
+  const transport = new SSEServerTransport('/message?sessionId=' + sessionId, res);
   transports.set(sessionId, transport);
-  res.cookie('sessionId', sessionId);
   await server.connect(transport);
 });
 
 app.post('/message', async (req, res) => {
-  const sessionId = req.headers.cookie?.split('sessionId=')[1]?.split(';')[0];
-  const transport = transports.get(sessionId as string) || Array.from(transports.values())[0];
+  const sessionId = req.query.sessionId as string;
+  const transport = transports.get(sessionId) || Array.from(transports.values())[transports.size - 1];
   if (transport) {
-    await transport.handlePostMessage(req, res);
+    try {
+      await transport.handlePostMessage(req, res);
+    } catch (e) {
+      console.error('Error handling post message', e);
+      if (!res.headersSent) res.status(500).send('Error');
+    }
   } else {
     res.status(400).send('No transport');
   }

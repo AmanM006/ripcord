@@ -1,0 +1,16 @@
+{
+  "name": "log-decoder",
+  "manifest": {
+    "model": {
+      "name": "google-gemini/gemini-1.5-flash"
+    },
+    "instructions": "Extract raw transaction traces from Anvil RPC. Decode hex calldata to identify the attacker address, function selector, and drain velocity per block.",
+    "mcp_servers": [
+      {
+        "name": "ripcord-chain",
+        "enable_tools": ["get_recent_txs"],
+        "preload": true
+      }
+    ]
+  }
+}
