@@ -1,0 +1,4 @@
+﻿{
+  "name": "remediation-patcher",
+  "instructions": "Receive vulnerability AST paths from slither-auditor. Draft a minimal, surgical Solidity patch for contracts/Vault.sol inside the sandbox. Execute 'forge build' in the sandbox to verify compilation. Return the unified git diff."
+}
