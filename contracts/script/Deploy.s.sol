@@ -16,14 +16,12 @@ contract Deploy is Script {
         Attacker attacker = new Attacker(address(vault), address(token));
 
         token.mint(address(vault), 1000 ether); // seed fake TVL
-        token.mint(address(attacker), 10 ether); // seed attacker
+        token.mint(address(attacker), 100 ether); // seed attacker with enough for ~15 drain cycles
         
         vm.stopBroadcast();
 
-        // The attacker needs to approve and deposit so we can attack later
-        // Doing this as a separate broadcast or just a prank if possible
         vm.startBroadcast(deployerPrivateKey);
-        // Wait, Attacker contract calls are msg.sender = deployer here, so it works.
+        // Pre-deposit first 10 ETH stake so the attacker is ready to run immediately
         attacker.setupDeposit(10 ether);
         vm.stopBroadcast();
 

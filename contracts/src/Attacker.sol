@@ -27,6 +27,7 @@ contract Attacker {
     }
 
     function attack(uint256 amount) external {
+        reentryCount = 0;
         vault.withdraw(amount);
     }
 

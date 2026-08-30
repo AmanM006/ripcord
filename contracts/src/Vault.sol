@@ -33,7 +33,9 @@ contract Vault {
         require(deposits[msg.sender] >= amount, "insufficient balance");
         (bool ok, ) = msg.sender.call(abi.encodeWithSignature("onWithdraw(uint256)", amount));
         token.transfer(msg.sender, amount);
-        deposits[msg.sender] -= amount;   // <-- too late, this is the bug
+        unchecked {
+            deposits[msg.sender] -= amount;   // <-- too late, this is the bug
+        }
         emit Withdraw(msg.sender, amount);
     }
 

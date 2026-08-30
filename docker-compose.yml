@@ -1,50 +1,76 @@
 services:
   anvil:
+    command:
+    - anvil
+    - --host
+    - 0.0.0.0
+    - --chain-id
+    - '31337'
+    entrypoint:
+    - ''
     image: ghcr.io/foundry-rs/foundry:latest
-    entrypoint: [""]
-    command: ["anvil", "--host", "0.0.0.0", "--chain-id", "31337"]
-    ports: ["8545:8545"]
-
-  deployer:
-    build: ./contracts
-    depends_on: [anvil]
-    entrypoint: [""]
-    command: ["forge", "script", "script/Deploy.s.sol", "--rpc-url", "http://anvil:8545", "--broadcast"]
-    volumes:
-      - ./contracts/out:/out
-
-  mcp-server:
-    build: ./mcp-server
-    depends_on: [deployer]
-    ports: ["8811:8811"]
-    environment:
-      - RPC_URL=http://anvil:8545
-      - DEPLOY_ADDRESSES_PATH=/shared/deploy-addresses.json
-    volumes:
-      - ./contracts/out:/shared
-
+    ports:
+    - 8545:8545
   attacker-runner:
     build: ./attacker
-    depends_on: [mcp-server]
+    depends_on:
+    - mcp-server
     environment:
-      - RPC_URL=http://anvil:8545
-      - TRIGGER_MODE=auto-after:10s
+    - RPC_URL=http://anvil:8545
+    - TRIGGER_MODE=auto-after:10s
     volumes:
-      - ./contracts/out:/shared
-
+    - ./contracts/out:/shared
   dashboard:
     build: ./dashboard
-    ports: ["3000:3000"]
+    depends_on:
+    - mcp-server
     environment:
-      - NEXT_PUBLIC_MCP_URL=http://mcp-server:8811
-      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-    depends_on: [mcp-server]
-
+    - NEXT_PUBLIC_MCP_URL=http://mcp-server:8811
+    - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+    - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    ports:
+    - 3000:3000
+  deployer:
+    build: ./contracts
+    command:
+    - forge
+    - script
+    - script/Deploy.s.sol
+    - --rpc-url
+    - http://anvil:8545
+    - --broadcast
+    depends_on:
+    - anvil
+    entrypoint:
+    - ''
+    volumes:
+    - ./contracts/out:/out
+  mcp-server:
+    build: ./mcp-server
+    depends_on:
+    - deployer
+    environment:
+    - RPC_URL=http://anvil:8545
+    - DEPLOY_ADDRESSES_PATH=/shared/deploy-addresses.json
+    - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+    ports:
+    - 8811:8811
+    volumes:
+    - ./contracts/out:/shared
   trueforge:
     build: ./trueforge
-    ports: ["8790:8790"]
     environment:
-      - HOST=0.0.0.0
-      - LLM_API_KEY=${LLM_API_KEY}
-      - GEMINI_API_KEY=${LLM_API_KEY}
+    - HOST=0.0.0.0
+    - LLM_API_KEY=${LLM_API_KEY}
+    - GEMINI_API_KEY=${LLM_API_KEY}
+    ports:
+    - 8790:8790
+    privileged: true
+  trueforge-init:
+    build: ./trueforge-init
+    depends_on:
+    - trueforge
+    - mcp-server
+    environment:
+    - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: on-failure
