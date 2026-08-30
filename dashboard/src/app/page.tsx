@@ -22,8 +22,15 @@ export default function Home() {
         const res = await fetch('/api/vault-state');
         const data = await res.json();
         if (data.tvl !== undefined) {
-          // Only update display if > 0 (prevents 0-flicker between attacker cycles)
-          if (data.tvl !== '0' && data.tvl !== '') setTvl(data.tvl);
+          // Only update display if value is non-zero AND decreasing
+          // This hides the brief +10 spike from setupDeposit between drain cycles
+          if (data.tvl !== '0' && data.tvl !== '') {
+            setTvl(prev => {
+              if (prev === null) return data.tvl;
+              // Never show an increase — hold last value if attacker re-deposits briefly
+              return parseFloat(data.tvl) <= parseFloat(prev) ? data.tvl : prev;
+            });
+          }
         }
         if (data.paused !== undefined) setPaused(data.paused);
       } catch (err) {}
